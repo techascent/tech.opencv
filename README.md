@@ -5,7 +5,12 @@
 OpenCV bindings via javacpp.
 
 ## Usage
+Load/save, resize, clone.  Becase opencv matrixes need to be released and thus aren't garbage collected they are bound to a think.resource.core/resource-context which unwinds in a way similar to C++ RAII or with-open.
 
+Bindings to clojure.core.matrix and tech.datatype allow you to get into the properties of
+a loaded matrix.
+
+Please refer to the [tests](test/tech/opencv_test.clj).
 
 ## License
 
