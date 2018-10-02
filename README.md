@@ -10,7 +10,7 @@ Load/save, resize, clone.  Becase opencv matrixes need to be released and thus a
 Bindings to clojure.core.matrix and tech.datatype allow you to get into the properties of
 a loaded matrix.
 
-Please refer to the [tests](test/tech/opencv_test.clj).
+Please refer to the [tests](test/tech/opencv_test.clj) and [opencv.clj](src/tech/opencv.clj).
 
 ## License
 
