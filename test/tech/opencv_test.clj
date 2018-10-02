@@ -3,7 +3,9 @@
             [clojure.test :refer :all]
             [tech.opencv :as opencv]
             [think.resource.core :as resource]
-            [clojure.core.matrix :as m]))
+            [clojure.core.matrix :as m]
+            [clojure.core.matrix.macros :refer [c-for]]
+            [tech.datatype.base :as dtype]))
 
 (defn- delete-test-file!
   [test-fname]
@@ -26,3 +28,30 @@
       (is (.exists (io/file larger-fname)))
       ;;Now go visually inspect results
       )))
+
+
+(deftest marshal-test
+  (resource/with-resource-context
+    (with-bindings {#'dtype/*error-on-slow-path* true}
+      (let [src-img (opencv/load "test/data/test.jpg")
+            dest-img (opencv/clone src-img)
+            num-elems (m/ecount src-img)
+            float-data (float-array num-elems)
+            mult-data (float-array num-elems)
+            ;;Save as jpg and spend an hour scratching head...
+            test-fname "darken.png"
+            convert-fn (fn [input]
+                         (float (Math/round (* 0.5 input))))]
+        (dtype/copy! src-img float-data)
+        ;;darken img.  Float data is range 0-255
+        (c-for [idx (int 0) (< idx num-elems) (inc idx)]
+               (aset mult-data idx (float
+                                    (convert-fn (aget float-data idx)))))
+        (delete-test-file! test-fname)
+        (-> (dtype/copy! mult-data dest-img)
+            (opencv/save test-fname))
+        (let [result (opencv/load test-fname)
+              result-data (float-array num-elems)]
+          (dtype/copy! result result-data)
+          (is (m/equals (take 10 result-data)
+                        (map convert-fn (take 10 float-data)))))))))

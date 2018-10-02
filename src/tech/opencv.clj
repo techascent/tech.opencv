@@ -1,4 +1,4 @@
-(ns tech.opencv
+ (ns tech.opencv
   (:require [think.resource.core :as resource]
             [clojure.core.matrix.protocols :as mp]
             [tech.datatype.base :as dtype]
@@ -14,49 +14,6 @@
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
-
-
-(extend-type opencv_core$Mat
-  resource/PResource
-  (release-resource [item] (.release item))
-  mp/PDimensionInfo
-  (dimensionality [m] (count (mp/get-shape m)))
-  (get-shape [m] [(.rows m) (.cols m) (.channels m)])
-  (is-scalar? [m] false)
-  (is-vector? [m] true)
-  (dimension-count [m dimension-number]
-    (let [shape (mp/get-shape m)]
-      (if (<= (count shape) (long dimension-number))
-        (get shape dimension-number)
-        (throw (ex-info "Array does not have specific dimension"
-                        {:dimension-number dimension-number
-                         :shape shape})))))
-  mp/PElementCount
-  (element-count [m] (apply * (mp/get-shape m)))
-
-  dtype/PDatatype
-  ;;For now; I know opencv has more datatypes but whatevs
-  (get-datatype [m] :uint8)
-
-  ;;Setting the container type allows the marshalling system to forward
-  ;;all calls to the typed pointer's marshall methods.  Since we implement
-  ;;dtype/get-datatype and typed-pointer/->ptr we will have full access to
-  ;;the bulk read/write code defined in the marshalling system including correct
-  ;;conversion to/from unsigned datatypes
-  marshal/PContainerType
-  (container-type [item] :typed-pointer)
-
-  ;;Conversion to a raw pointer type
-  typed-pointer/PToPtr
-  (->ptr [item] (jcpp-dtype/set-pointer-limit-and-capacity
-                 (.ptr item)
-                 (mp/element-count item)))
-
-  ;;This allows bulk read/write into the object
-  dtype/PCopyRawData
-  (copy-raw->item! [item dest dest-offset]
-    (dtype/copy-raw->item! (typed-pointer/->typed-pointer item)
-                           dest dest-offset)))
 
 
 (def opencv-type->channels-datatype-map
@@ -155,6 +112,50 @@
              :datatype datatype}))
 
 
+(extend-type opencv_core$Mat
+  resource/PResource
+  (release-resource [item] (.release item))
+  mp/PDimensionInfo
+  (dimensionality [m] (count (mp/get-shape m)))
+  (get-shape [m] [(.rows m) (.cols m) (.channels m)])
+  (is-scalar? [m] false)
+  (is-vector? [m] true)
+  (dimension-count [m dimension-number]
+    (let [shape (mp/get-shape m)]
+      (if (<= (count shape) (long dimension-number))
+        (get shape dimension-number)
+        (throw (ex-info "Array does not have specific dimension"
+                        {:dimension-number dimension-number
+                         :shape shape})))))
+  mp/PElementCount
+  (element-count [m] (apply * (mp/get-shape m)))
+
+  dtype/PDatatype
+  (get-datatype [m] (-> (.type m)
+                        (opencv-type->channels-datatype)
+                        :datatype))
+
+  ;;Setting the container type allows the marshalling system to forward
+  ;;all calls to the typed pointer's marshall methods.  Since we implement
+  ;;dtype/get-datatype and typed-pointer/->ptr we will have full access to
+  ;;the bulk read/write code defined in the marshalling system including correct
+  ;;conversion to/from unsigned datatypes
+  marshal/PContainerType
+  (container-type [item] :typed-pointer)
+
+  ;;Conversion to a raw pointer type
+  typed-pointer/PToPtr
+  (->ptr [item] (jcpp-dtype/set-pointer-limit-and-capacity
+                 (.ptr item)
+                 (mp/element-count item)))
+
+  ;;This allows bulk read/write into the object
+  dtype/PCopyRawData
+  (copy-raw->item! [item dest dest-offset]
+    (dtype/copy-raw->item! (typed-pointer/->typed-pointer item)
+                           dest dest-offset)))
+
+
 (defn new-mat
   [height width n-channels & {:keys [dtype]
                               :or {dtype :uint8}}]
@@ -238,5 +239,6 @@
 (defn clone
   [src-img]
   (let [[src-height src-width n-channels] (m/shape src-img)]
-    (new-mat src-width src-height n-channels
-             :dtype (dtype/get-datatype src-img))))
+    (->> (new-mat src-height src-width n-channels
+                  :dtype (dtype/get-datatype src-img))
+         (dtype/copy! src-img))))
