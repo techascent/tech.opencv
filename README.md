@@ -35,7 +35,8 @@ a loaded matrix.
                         (map convert-fn (take 10 float-data))))))
 ```
 
-Please refer to the [tests](test/tech/opencv_test.clj).
+Please refer to the [tests](test/tech/opencv_test.clj) and [opencv.clj](src/tech/opencv.clj).
+
 
 ## License
 
