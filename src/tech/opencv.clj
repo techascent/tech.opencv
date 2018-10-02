@@ -1,0 +1,230 @@
+(ns tech.opencv
+  (:require [think.resource.core :as resource]
+            [clojure.core.matrix.protocols :as mp]
+            [tech.datatype.base :as dtype]
+            [tech.typed-pointer :as typed-pointer]
+            [tech.datatype.marshal :as marshal]
+            [tech.javacpp-datatype :as jcpp-dtype]
+            [clojure.set :as c-set]
+            [clojure.core.matrix :as m])
+  (:import [org.bytedeco.javacpp opencv_core
+            opencv_imgcodecs opencv_core$Mat
+            opencv_imgproc opencv_core$Size]))
+
+
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
+
+
+(extend-type opencv_core$Mat
+  resource/PResource
+  (release-resource [item] (.release item))
+  mp/PDimensionInfo
+  (dimensionality [m] (count (mp/get-shape m)))
+  (get-shape [m] [(.rows m) (.cols m) (.channels m)])
+  (is-scalar? [m] false)
+  (is-vector? [m] true)
+  (dimension-count [m dimension-number]
+    (let [shape (mp/get-shape m)]
+      (if (<= (count shape) (long dimension-number))
+        (get shape dimension-number)
+        (throw (ex-info "Array does not have specific dimension"
+                        {:dimension-number dimension-number
+                         :shape shape})))))
+  mp/PElementCount
+  (element-count [m] (apply * (mp/get-shape m)))
+
+  dtype/PDatatype
+  ;;For now; I know opencv has more datatypes but whatevs
+  (get-datatype [m] :uint8)
+
+  ;;Setting the container type allows the marshalling system to forward
+  ;;all calls to the typed pointer's marshall methods.  Since we implement
+  ;;dtype/get-datatype and typed-pointer/->ptr we will have full access to
+  ;;the bulk read/write code defined in the marshalling system including correct
+  ;;conversion to/from unsigned datatypes
+  marshal/PContainerType
+  (container-type [item] :typed-pointer)
+
+  ;;Conversion to a raw pointer type
+  typed-pointer/PToPtr
+  (->ptr [item] (jcpp-dtype/set-pointer-limit-and-capacity
+                 (.ptr item)
+                 (mp/element-count item)))
+
+  ;;This allows bulk read/write into the object
+  dtype/PCopyRawData
+  (copy-raw->item! [item dest dest-offset]
+    (dtype/copy-raw->item! (typed-pointer/->typed-pointer item)
+                           dest dest-offset)))
+
+
+(def opencv-type->channels-datatype-map
+  {opencv_core/CV_8SC1 {:n-channels 1
+                        :datatype :int8}
+   opencv_core/CV_8SC2 {:n-channels 2
+                        :datatype :int8}
+   opencv_core/CV_8SC3 {:n-channels 3
+                        :datatype :int8}
+   opencv_core/CV_8SC4 {:n-channels 4
+                        :datatype :int8}
+
+   opencv_core/CV_8UC1 {:n-channels 1
+                        :datatype :uint8}
+   opencv_core/CV_8UC2 {:n-channels 2
+                        :datatype :uint8}
+   opencv_core/CV_8UC3 {:n-channels 3
+                        :datatype :uint8}
+   opencv_core/CV_8UC4 {:n-channels 4
+                        :datatype :uint8}
+
+   opencv_core/CV_16SC1 {:n-channels 1
+                        :datatype :int16}
+   opencv_core/CV_16SC2 {:n-channels 2
+                        :datatype :int16}
+   opencv_core/CV_16SC3 {:n-channels 3
+                        :datatype :int16}
+   opencv_core/CV_16SC4 {:n-channels 4
+                        :datatype :int16}
+
+   opencv_core/CV_16UC1 {:n-channels 1
+                        :datatype :uint16}
+   opencv_core/CV_16UC2 {:n-channels 2
+                        :datatype :uint16}
+   opencv_core/CV_16UC3 {:n-channels 3
+                        :datatype :uint16}
+   opencv_core/CV_16UC4 {:n-channels 4
+                         :datatype :uint16}
+
+   opencv_core/CV_32SC1 {:n-channels 1
+                        :datatype :int32}
+   opencv_core/CV_32SC2 {:n-channels 2
+                        :datatype :int32}
+   opencv_core/CV_32SC3 {:n-channels 3
+                        :datatype :int32}
+   opencv_core/CV_32SC4 {:n-channels 4
+                         :datatype :int32}
+
+   opencv_core/CV_32FC1 {:n-channels 1
+                        :datatype :float32}
+   opencv_core/CV_32FC2 {:n-channels 2
+                        :datatype :float32}
+   opencv_core/CV_32FC3 {:n-channels 3
+                        :datatype :float32}
+   opencv_core/CV_32FC4 {:n-channels 4
+                         :datatype :float32}
+
+   opencv_core/CV_64FC1 {:n-channels 1
+                        :datatype :float64}
+   opencv_core/CV_64FC2 {:n-channels 2
+                        :datatype :float64}
+   opencv_core/CV_64FC3 {:n-channels 3
+                        :datatype :float64}
+   opencv_core/CV_64FC4 {:n-channels 4
+                         :datatype :float64}})
+
+
+(def channels-datatype->opencv-type-map
+  (c-set/map-invert opencv-type->channels-datatype-map))
+
+
+(defmacro thrownil
+  [x message map]
+  `(if-let [x# ~x]
+     x#
+     (throw (ex-info ~message ~map))))
+
+
+(defn opencv-type->channels-datatype
+  "Given an opencv type map to
+  {:n-channels num-channels
+  :datatype datatype}"
+  [opencv-type]
+  (thrownil (get opencv-type->channels-datatype-map opencv-type)
+            "Failed to map from opencv type to channels and datatype"
+            {:opencv-type opencv-type}))
+
+
+(defn channels-datatype->opencv-type
+  "Map from n-channels and datatype -> opencv type"
+  ^long [n-channels datatype]
+  (thrownil (get channels-datatype->opencv-type-map {:n-channels n-channels
+                                                     :datatype datatype})
+            "Failed to map from chanels datatype -> opencv type"
+            {:n-channels n-channels
+             :datatype datatype}))
+
+
+(defn new-mat
+  [height width n-channels & {:keys [dtype]
+                              :or {dtype :uint8}}]
+  (resource/track
+   (opencv_core$Mat. (int height)
+                     (int width)
+                     (channels-datatype->opencv-type
+                      n-channels dtype))))
+
+
+(defn load
+  "Note you can call clojure.core.matrix/shape and tech.datatype.base/get-datatype
+  to figure out what was loaded."
+  [^String path]
+  (resource/track (opencv_imgcodecs/imread path)))
+
+
+(defn save
+  [^opencv_core$Mat img ^String path]
+  (opencv_imgcodecs/imwrite path img))
+
+
+(def resize-algo-kwd->opencv-map
+  {;;Bilinear
+   :linear opencv_imgproc/CV_INTER_LINEAR
+   ;;Cubic
+   :cubic opencv_imgproc/CV_INTER_CUBIC
+   ;;Pixel area averaging
+   :area opencv_imgproc/CV_INTER_AREA
+   ;;Lanczos with a 4x4 filter
+   :lanczos opencv_imgproc/CV_INTER_LANCZOS4
+   ;;Nearest Neighbor
+   :nn opencv_imgproc/CV_INTER_NN})
+
+
+(defn resize-algo-kwd->opencv
+  ^long [resize-algo]
+  (thrownil (get resize-algo-kwd->opencv-map resize-algo)
+            "Failed to map resize algo to opencv"
+            {:resize-algorithm resize-algo}))
+
+
+(defn resize-imgproc
+  "Use improc resize method directly."
+  [^opencv_core$Mat src-img
+   ^opencv_core$Mat dest-img
+   resize-algorithm-kwd]
+  (let [[new-height new-width n-chans] (m/shape dest-img)
+        new-width (int new-width)
+        new-height (int new-height)]
+    (opencv_imgproc/resize src-img dest-img
+                           (opencv_core$Size. new-width new-height)
+                           0.0 0.0
+                           (resize-algo-kwd->opencv resize-algorithm-kwd))))
+
+
+(defn resize
+  [src-img new-width new-height]
+  (let [[src-height src-width n-channels] (int (last (m/shape src-img)))
+        retval (new-mat new-width new-height n-channels
+                        :dtype (dtype/get-datatype src-img))]
+    (resize-imgproc src-img retval (if (> (int new-width)
+                                          (int src-width))
+                                     :linear
+                                     :area))
+    retval))
+
+
+(defn clone
+  [src-img]
+  (let [[src-height src-width n-channels] (int (last (m/shape src-img)))]
+    (new-mat src-width src-height n-channels
+             :dtype (dtype/get-datatype src-img))))
