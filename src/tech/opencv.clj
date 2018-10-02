@@ -174,7 +174,8 @@
 
 (defn save
   [^opencv_core$Mat img ^String path]
-  (opencv_imgcodecs/imwrite path img))
+  (opencv_imgcodecs/imwrite path img)
+  img)
 
 
 (def resize-algo-kwd->opencv-map
@@ -212,19 +213,30 @@
 
 
 (defn resize
-  [src-img new-width new-height]
-  (let [[src-height src-width n-channels] (int (last (m/shape src-img)))
-        retval (new-mat new-width new-height n-channels
-                        :dtype (dtype/get-datatype src-img))]
-    (resize-imgproc src-img retval (if (> (int new-width)
-                                          (int src-width))
-                                     :linear
-                                     :area))
-    retval))
+  ([src-img new-width new-height {:keys [resize-algorithm] :as options}]
+   (let [[src-height src-width n-channels] (m/shape src-img)
+         retval (new-mat new-height new-width n-channels
+                         :dtype (dtype/get-datatype src-img))
+         resize-algorithm (or resize-algorithm
+                              (if (> (int new-width)
+                                     (int src-width))
+                                :linear
+                                :area))]
+     (resize-imgproc src-img retval resize-algorithm)
+     retval))
+  ([src-img new-width new-height]
+   (resize src-img new-width new-height {}))
+  ([src-img new-width]
+   (let [[src-height src-width chans] (m/shape src-img)
+         ratio (/ (double new-width) (double src-width))
+         new-height (-> (* (double src-height) ratio)
+                        Math/round
+                        long)]
+     (resize src-img new-width new-height))))
 
 
 (defn clone
   [src-img]
-  (let [[src-height src-width n-channels] (int (last (m/shape src-img)))]
+  (let [[src-height src-width n-channels] (m/shape src-img)]
     (new-mat src-width src-height n-channels
              :dtype (dtype/get-datatype src-img))))
