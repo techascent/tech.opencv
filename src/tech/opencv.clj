@@ -219,6 +219,7 @@
 
 
 (defn resize
+  "Resize the source image producing a new image."
   ([src-img new-width new-height {:keys [resize-algorithm] :as options}]
    (let [[src-height src-width n-channels] (m/shape src-img)
          retval (new-mat new-height new-width n-channels
