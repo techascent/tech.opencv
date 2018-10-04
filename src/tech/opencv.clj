@@ -157,8 +157,8 @@
 
 
 (defn new-mat
-  [height width n-channels & {:keys [dtype]
-                              :or {dtype :uint8}}]
+  ^opencv_core$Mat [height width n-channels & {:keys [dtype]
+                                               :or {dtype :uint8}}]
   (resource/track
    (opencv_core$Mat. (int height)
                      (int width)
@@ -169,7 +169,7 @@
 (defn load
   "Note you can call clojure.core.matrix/shape and tech.datatype.base/get-datatype
   to figure out what was loaded."
-  [^String path]
+  ^opencv_core$Mat [^String path]
   (resource/track (opencv_imgcodecs/imread path)))
 
 
@@ -199,6 +199,11 @@
             {:resize-algorithm resize-algo}))
 
 
+(defn size
+  ^opencv_core$Size [width height]
+  (opencv_core$Size. (int width) (int height)))
+
+
 (defn resize-imgproc
   "Use improc resize method directly."
   [^opencv_core$Mat src-img
@@ -208,7 +213,7 @@
         new-width (int new-width)
         new-height (int new-height)]
     (opencv_imgproc/resize src-img dest-img
-                           (opencv_core$Size. new-width new-height)
+                           (size new-width new-height)
                            0.0 0.0
                            (resize-algo-kwd->opencv resize-algorithm-kwd))))
 
