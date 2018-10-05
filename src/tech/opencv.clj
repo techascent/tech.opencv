@@ -114,7 +114,7 @@
 
 (extend-type opencv_core$Mat
   resource/PResource
-  (release-resource [item] (.release item))
+  (release-resource [item] (.release item) (.deallocate item))
   mp/PDimensionInfo
   (dimensionality [m] (count (mp/get-shape m)))
   (get-shape [m] [(.rows m) (.cols m) (.channels m)])
