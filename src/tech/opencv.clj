@@ -1,10 +1,9 @@
- (ns tech.opencv
+(ns tech.opencv
   (:require [think.resource.core :as resource]
             [clojure.core.matrix.protocols :as mp]
             [tech.datatype.base :as dtype]
-            [tech.typed-pointer :as typed-pointer]
-            [tech.datatype.marshal :as marshal]
-            [tech.javacpp-datatype :as jcpp-dtype]
+            [tech.datatype.javacpp :as jcpp-dtype]
+            [tech.datatype.java-primitive :as primitive]
             [clojure.set :as c-set]
             [clojure.core.matrix :as m])
   (:import [org.bytedeco.javacpp opencv_core
@@ -132,28 +131,17 @@
 
   dtype/PDatatype
   (get-datatype [m] (-> (.type m)
-                        (opencv-type->channels-datatype)
+                        opencv-type->channels-datatype
                         :datatype))
 
-  ;;Setting the container type allows the marshalling system to forward
-  ;;all calls to the typed pointer's marshall methods.  Since we implement
-  ;;dtype/get-datatype and typed-pointer/->ptr we will have full access to
-  ;;the bulk read/write code defined in the marshalling system including correct
-  ;;conversion to/from unsigned datatypes
-  marshal/PContainerType
-  (container-type [item] :typed-pointer)
-
-  ;;Conversion to a raw pointer type
-  typed-pointer/PToPtr
-  (->ptr [item] (jcpp-dtype/set-pointer-limit-and-capacity
-                 (.ptr item)
-                 (mp/element-count item)))
-
-  ;;This allows bulk read/write into the object
-  dtype/PCopyRawData
-  (copy-raw->item! [item dest dest-offset]
-    (dtype/copy-raw->item! (typed-pointer/->typed-pointer item)
-                           dest dest-offset)))
+  jcpp-dtype/PToPtr
+  (->ptr-backing-store [item] (jcpp-dtype/set-pointer-limit-and-capacity
+                               (.ptr item)
+                               (mp/element-count item)))
+  ;;We gain a lot from inheritance of the base Pointer type (opencv_core$Mat inherits
+  ;;from javacpp/Pointer.  This allows all the machinery required to interact
+  ;;with the datatype copy system to be implemented once in Pointer.
+  )
 
 
 (defn new-mat
