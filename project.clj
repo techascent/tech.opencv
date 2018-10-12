@@ -1,4 +1,4 @@
-(defproject techascent/tech.opencv "0.2.1"
+(defproject techascent/tech.opencv "0.2.2-SNAPSHOT"
   :description "Opencv bindings via javacpp"
   :url "http://github.com/tech-ascent/tech.opencv"
   :license {:name "Eclipse Public License"
