@@ -80,7 +80,7 @@ A bit more involved example:
       (opencv/save test-image "bgr-lighten.jpg"))
 ```
 
-![lightened bgr](images/lighten-bgr.jpg)
+![lightened bgr](images/bgr-lighten.jpg)
 
 
 
