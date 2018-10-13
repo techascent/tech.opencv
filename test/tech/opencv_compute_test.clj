@@ -4,14 +4,15 @@
             [think.resource.core :as resource]
             [clojure.test :refer :all]
             [tech.compute.cpu.tensor-math :as cpu-tm]
-            [tech.opencv-test :as opencv-test]))
+            [tech.opencv-test :as opencv-test]
+            [tech.compute.tensor.operations :as op]))
 
 
 (ct/enable-cpu-tensors!)
 
 
 
-(defn bgr-test
+(deftest bgr-test
   []
   (resource/with-resource-context
     (let [test-image (opencv/load "test/data/test.jpg")
@@ -26,3 +27,18 @@
       ;;the function.
       (ct/assign! image-tens dest-tens)
       (opencv/save test-image "bgr.jpg"))))
+
+
+(deftest lighten-bgr-test
+  []
+  (resource/with-resource-context
+    (let [test-image (opencv/load "test/data/test.jpg")
+          image-tens (cpu-tm/typed-bufferable->tensor test-image)
+          bgr-img (ct/select image-tens :all :all [2 1 0])]
+      (ct/assign! image-tens (-> (ct/new-tensor (ct/shape bgr-img) :datatype :uint16)
+                                 (ct/assign! bgr-img)
+                                 (op/+ 50)
+                                 ;;Clamp top end to 0-255
+                                 (op/min 255)))
+
+      (opencv/save test-image "bgr-lighten.jpg"))))

@@ -64,6 +64,29 @@ Integrated with the compute.tensor math library:
 ![bgr image](images/bgr.jpg)
 
 
+A bit more involved example:
+
+
+```clojure
+    (let [test-image (opencv/load "test/data/test.jpg")
+          image-tens (cpu-tm/typed-bufferable->tensor test-image)
+          bgr-img (ct/select image-tens :all :all [2 1 0])]
+      (ct/assign! image-tens (-> (ct/new-tensor (ct/shape bgr-img) :datatype :uint16)
+                                 (ct/assign! bgr-img)
+                                 (op/+ 50)
+                                 ;;Clamp top end to 0-255
+                                 (op/min 255)))
+
+      (opencv/save test-image "bgr-lighten.jpg"))
+```
+
+![lightened bgr](images/lighten-bgr.jpg)
+
+
+
+### Further Reference
+
+
 Please refer to the [tests](test/tech/opencv_test.clj),
 [compute tests](test/tech/opencv_compute_test.clj),
 and [opencv.clj](src/tech/opencv.clj).
