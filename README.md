@@ -61,7 +61,7 @@ Integrated with the compute.tensor math library:
       (opencv/save test-image "bgr.jpg"))
 ```
 
-BGR: ![bgr image](images/bgr.jpg)
+![bgr image](images/bgr.jpg)
 
 
 Please refer to the [tests](test/tech/opencv_test.clj),
