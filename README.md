@@ -53,6 +53,7 @@ Integrated with the compute.tensor math library:
 ```
 
 Darken: ![darker image](images/darken.png)
+
 BGR: ![bgr image](images/bgr.jpg)
 
 
@@ -64,7 +65,7 @@ and [opencv.clj](src/tech/opencv.clj).
 
 ## License
 
-Copyright © 2018 FIXME
+Copyright © 2018 Tech Ascent, LLC.
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
