@@ -35,7 +35,31 @@ a loaded matrix.
                         (map convert-fn (take 10 float-data))))))
 ```
 
-Please refer to the [tests](test/tech/opencv_test.clj) and [opencv.clj](src/tech/opencv.clj).
+Integrated with the compute.tensor math library:
+
+```clojure
+    (let [test-image (opencv/load "test/data/test.jpg")
+          image-tens (cpu-tm/typed-bufferable->tensor test-image)
+          ;;Select is in-place so this did not change the image at all.
+          bgr-image (ct/select image-tens :all :all [2 1 0])
+          dest-tens (-> (ct/new-tensor (ct/shape bgr-image)
+                                       :datatype (ct/get-datatype image-tens))
+                        (ct/assign! bgr-image))]
+      ;;The tensor library has the convention that the thing that is mutated
+      ;;is the first thing.  Also the thing that is mutated is returned from
+      ;;the function.
+      (ct/assign! image-tens dest-tens)
+      (opencv/save test-image "bgr.jpg"))
+```
+
+Darken: ![darker image](images/darken.png)
+BGR: ![bgr image](images/bgr.jpg)
+
+
+
+Please refer to the [tests](test/tech/opencv_test.clj),
+[compute tests](test/tech/opencv_compute_test.clj),
+and [opencv.clj](src/tech/opencv.clj).
 
 
 ## License
