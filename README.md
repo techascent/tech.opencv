@@ -68,11 +68,11 @@ A bit more involved example:
 
 
 ```clojure
-    (let [test-image (opencv/load "test/data/test.jpg")
-          image-tens (cpu-tm/typed-bufferable->tensor test-image)
-          bgr-img (ct/select image-tens :all :all [2 1 0])]
-      (ct/assign! image-tens (-> (ct/new-tensor (ct/shape bgr-img) :datatype :uint16)
-                                 (ct/assign! bgr-img)
+  (let [test-image (opencv/load "test/data/test.jpg")
+        image-tens (cpu-tm/typed-bufferable->tensor test-image)]
+      (ct/assign! image-tens (-> image-tens
+                                 (ct/select :all :all [2 1 0])
+                                 (ct/clone :datatype :uint16)
                                  (op/+ 50)
                                  ;;Clamp top end to 0-255
                                  (op/min 255)))

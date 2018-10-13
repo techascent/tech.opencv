@@ -9,4 +9,4 @@
 
   ;;Makes for some great demos
 
-  :profiles {:dev {:dependencies [[techascent/tech.compute "0.6.4"]]}})
+  :profiles {:dev {:dependencies [[techascent/tech.compute "0.6.6"]]}})
