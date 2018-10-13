@@ -7,7 +7,7 @@
             [clojure.core.matrix.macros :refer [c-for]]
             [tech.datatype.base :as dtype]))
 
-(defn- delete-test-file!
+(defn delete-test-file!
   [test-fname]
   (when (.exists (io/file test-fname))
     (io/delete-file test-fname)))
