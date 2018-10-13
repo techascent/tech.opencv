@@ -5,6 +5,10 @@
 OpenCV bindings via javacpp.
 
 ## Usage
+
+
+### Basic
+
 Load/save, resize, clone.  Becase opencv matrixes need to be released and thus aren't garbage collected they are bound to a think.resource.core/resource-context which unwinds in a way similar to C++ RAII or with-open.
 
 Bindings to clojure.core.matrix and tech.datatype allow you to get into the properties of
@@ -35,6 +39,11 @@ a loaded matrix.
                         (map convert-fn (take 10 float-data))))))
 ```
 
+![darker image](images/darken.png)
+
+
+### Compute Tensors
+
 Integrated with the compute.tensor math library:
 
 ```clojure
@@ -52,10 +61,7 @@ Integrated with the compute.tensor math library:
       (opencv/save test-image "bgr.jpg"))
 ```
 
-Darken: ![darker image](images/darken.png)
-
 BGR: ![bgr image](images/bgr.jpg)
-
 
 
 Please refer to the [tests](test/tech/opencv_test.clj),
@@ -65,7 +71,7 @@ and [opencv.clj](src/tech/opencv.clj).
 
 ## License
 
-Copyright © 2018 Tech Ascent, LLC.
+Copyright © 2018 [Tech Ascent, LLC](https://github.com/tech-ascent).
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
