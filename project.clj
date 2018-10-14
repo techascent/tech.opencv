@@ -1,4 +1,4 @@
-(defproject techascent/tech.opencv "0.2.3"
+(defproject techascent/tech.opencv "0.2.4"
   :description "Opencv bindings via javacpp"
   :url "http://github.com/tech-ascent/tech.opencv"
   :license {:name "Eclipse Public License"
@@ -9,4 +9,4 @@
 
   ;;Makes for some great demos
 
-  :profiles {:dev {:dependencies [[techascent/tech.compute "0.6.6"]]}})
+  :profiles {:dev {:dependencies [[techascent/tech.compute "0.6.7"]]}})
