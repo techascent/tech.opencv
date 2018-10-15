@@ -1,7 +1,7 @@
 (ns tech.opencv-compute-test
   (:require [tech.opencv :as opencv]
             [tech.compute.tensor :as ct]
-            [think.resource.core :as resource]
+            [tech.resource :as resource]
             [clojure.test :refer :all]
             [tech.compute.cpu.tensor-math :as cpu-tm]
             [tech.opencv-test :as opencv-test]

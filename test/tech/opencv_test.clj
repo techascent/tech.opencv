@@ -2,7 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]
             [tech.opencv :as opencv]
-            [think.resource.core :as resource]
+            [tech.resource :as resource]
             [clojure.core.matrix :as m]
             [clojure.core.matrix.macros :refer [c-for]]
             [tech.datatype.base :as dtype]))

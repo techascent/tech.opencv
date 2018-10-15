@@ -1,5 +1,5 @@
 (ns tech.opencv
-  (:require [think.resource.core :as resource]
+  (:require [tech.resource :as resource]
             [clojure.core.matrix.protocols :as mp]
             [tech.datatype.base :as dtype]
             [tech.datatype.javacpp :as jcpp-dtype]
