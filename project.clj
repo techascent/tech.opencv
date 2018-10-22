@@ -1,4 +1,4 @@
-(defproject techascent/tech.opencv "1.1-SNAPSHOT"
+(defproject techascent/tech.opencv "1.1"
   :description "Opencv bindings via javacpp"
   :url "http://github.com/tech-ascent/tech.opencv"
   :license {:name "Eclipse Public License"
@@ -8,5 +8,4 @@
                  [org.bytedeco.javacpp-presets/opencv-platform "3.4.0-1.4"]]
 
   ;;Makes for some great demos
-
   :profiles {:dev {:dependencies [[techascent/tech.compute "1.0"]]}})
