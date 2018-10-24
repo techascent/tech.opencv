@@ -8,4 +8,4 @@
                  [org.bytedeco.javacpp-presets/opencv-platform "3.4.0-1.4"]]
 
   ;;Makes for some great demos
-  :profiles {:dev {:dependencies [[techascent/tech.compute "1.2"]]}})
+  :profiles {:dev {:dependencies [[techascent/tech.compute "1.4"]]}})
