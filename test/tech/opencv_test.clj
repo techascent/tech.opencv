@@ -5,7 +5,8 @@
             [tech.resource :as resource]
             [clojure.core.matrix :as m]
             [clojure.core.matrix.macros :refer [c-for]]
-            [tech.datatype.base :as dtype]))
+            [tech.datatype :as dtype]
+            [tech.datatype.base :as dtype-base]))
 
 (defn delete-test-file!
   [test-fname]
@@ -32,7 +33,7 @@
 
 (deftest marshal-test
   (resource/with-resource-context
-    (with-bindings {#'dtype/*error-on-slow-path* true}
+    (with-bindings {#'dtype-base/*error-on-slow-path* true}
       (let [src-img (opencv/load "test/data/test.jpg")
             dest-img (opencv/clone src-img)
             num-elems (m/ecount src-img)
@@ -55,3 +56,13 @@
           (dtype/copy! result result-data)
           (is (m/equals (take 10 result-data)
                         (map convert-fn (take 10 float-data)))))))))
+
+
+(deftest copy-raw
+  (resource/with-resource-context
+    (let [src-image (opencv/load "test/data/test.jpg")
+          test-buf (int-array (* 3 (m/ecount src-image)))]
+      ;;Does this work or not.  Important functionality
+      (dtype/copy-raw->item! (repeat 3 src-image) test-buf 0)
+      (is (= [172 170 170 172 170 170 171 169 169 171]
+             (vec (take 10 test-buf)))))))
