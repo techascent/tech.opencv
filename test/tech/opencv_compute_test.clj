@@ -5,14 +5,15 @@
             [clojure.test :refer :all]
             [tech.compute.cpu.tensor-math :as cpu-tm]
             [tech.opencv-test :as opencv-test]
-            [tech.compute.tensor.operations :as op]))
+            [tech.compute.tensor.operations :as op]
+            [tech.datatype.jna :as dtype-jna]))
 
 
 (deftest bgr-test
   []
   (resource/with-resource-context
     (let [test-image (opencv/load "test/data/test.jpg")
-          image-tens (cpu-tm/typed-bufferable->tensor test-image)
+          image-tens (cpu-tm/buffer->tensor test-image)
           ;;Select is in-place so this did not change the image at all.
           bgr-image (ct/select image-tens :all :all [2 1 0])
           dest-tens (ct/clone bgr-image)]
@@ -27,7 +28,7 @@
   []
   (resource/with-resource-context
     (let [test-image (opencv/load "test/data/test.jpg")
-          image-tens (cpu-tm/typed-bufferable->tensor test-image)]
+          image-tens (cpu-tm/buffer->tensor test-image)]
       (ct/assign! image-tens (-> image-tens
                                  (ct/select :all :all [2 1 0])
                                  (ct/clone :datatype :uint16)
@@ -36,3 +37,11 @@
                                  (op/min 255)))
 
       (opencv/save test-image "bgr-lighten.jpg"))))
+
+
+(deftest smooth-image-flow
+  (-> (opencv/load "test/data/test.jpg")
+      cpu-tm/buffer->tensor
+      (op// 2)
+      ct/tensor->buffer
+      (opencv/save "tensor_darken.jpg")))

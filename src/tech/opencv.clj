@@ -3,7 +3,6 @@
             [clojure.core.matrix.protocols :as mp]
             [tech.datatype.base :as dtype]
             [tech.datatype.javacpp :as jcpp-dtype]
-            [tech.datatype.java-primitive :as primitive]
             [tech.datatype.java-unsigned :as unsigned]
             [clojure.set :as c-set]
             [clojure.core.matrix :as m])
@@ -138,14 +137,7 @@
   jcpp-dtype/PToPtr
   (->ptr-backing-store [item] (jcpp-dtype/set-pointer-limit-and-capacity
                                (.ptr item)
-                               (mp/element-count item)))
-  ;;We gain a lot from inheritance of the base Pointer type (opencv_core$Mat inherits
-  ;;from javacpp/Pointer.  This allows all the machinery required to interact
-  ;;with the datatype copy system to be implemented once in Pointer.
-  dtype/PCopyRawData
-  (copy-raw->item! [raw-data ary-target target-offset options]
-    (dtype/copy-raw->item! (unsigned/->typed-buffer raw-data) ary-target
-                           target-offset options)))
+                               (mp/element-count item))))
 
 
 (defn new-mat
