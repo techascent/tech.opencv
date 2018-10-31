@@ -6,6 +6,7 @@
             [tech.datatype.java-unsigned :as unsigned]
             [clojure.set :as c-set]
             [clojure.core.matrix :as m])
+  (:refer-clojure :exclude [load])
   (:import [org.bytedeco.javacpp opencv_core
             opencv_imgcodecs opencv_core$Mat
             opencv_imgproc opencv_core$Size]))
