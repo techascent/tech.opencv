@@ -111,6 +111,8 @@
             {:n-channels n-channels
              :datatype datatype}))
 
+(declare new-mat)
+
 
 (extend-type opencv_core$Mat
   resource/PResource
@@ -134,6 +136,10 @@
   (get-datatype [m] (-> (.type m)
                         opencv-type->channels-datatype
                         :datatype))
+  dtype/PPrototype
+  (from-prototype [item]
+    (let [[height width channels] (dtype/shape item)]
+      (new-mat height width channels :dtype (dtype/get-datatype item))))
 
   jcpp-dtype/PToPtr
   (->ptr-backing-store [item] (jcpp-dtype/set-pointer-limit-and-capacity
@@ -229,7 +235,4 @@
 
 (defn clone
   [src-img]
-  (let [[src-height src-width n-channels] (m/shape src-img)]
-    (->> (new-mat src-height src-width n-channels
-                  :dtype (dtype/get-datatype src-img))
-         (dtype/copy! src-img))))
+  (dtype/clone src-img))
