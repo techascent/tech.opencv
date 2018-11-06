@@ -1,7 +1,8 @@
 (ns tech.opencv
   (:require [tech.resource :as resource]
             [clojure.core.matrix.protocols :as mp]
-            [tech.datatype.base :as dtype]
+            [tech.datatype.base :as dtype-base]
+            [tech.datatype :as dtype]
             [tech.datatype.javacpp :as jcpp-dtype]
             [tech.datatype.java-unsigned :as unsigned]
             [clojure.set :as c-set]
@@ -132,14 +133,17 @@
   mp/PElementCount
   (element-count [m] (apply * (mp/get-shape m)))
 
-  dtype/PDatatype
+  dtype-base/PDatatype
   (get-datatype [m] (-> (.type m)
                         opencv-type->channels-datatype
                         :datatype))
-  dtype/PPrototype
-  (from-prototype [item]
-    (let [[height width channels] (dtype/shape item)]
-      (new-mat height width channels :dtype (dtype/get-datatype item))))
+  dtype-base/PPrototype
+  (from-prototype [item datatype shape]
+    (when-not (= 3 (count shape))
+      (throw (ex-info "Opencv Mat must have height, width channels"
+                      {:shape shape})))
+    (let [[height width channels] shape]
+      (new-mat height width channels :dtype datatype)))
 
   jcpp-dtype/PToPtr
   (->ptr-backing-store [item] (jcpp-dtype/set-pointer-limit-and-capacity
