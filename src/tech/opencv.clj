@@ -5,6 +5,7 @@
             [tech.datatype :as dtype]
             [tech.datatype.javacpp :as jcpp-dtype]
             [tech.datatype.java-unsigned :as unsigned]
+            [tech.datatype.jna :as dtype-jna]
             [clojure.set :as c-set]
             [clojure.core.matrix :as m])
   (:refer-clojure :exclude [load])
@@ -86,6 +87,17 @@
   (c-set/map-invert opencv-type->channels-datatype-map))
 
 
+(defn acceptable-image-params?
+  [datatype shape]
+  (and (sequential? shape)
+       (= 3 (count shape))
+       (let [[height width chans] shape
+             opencv-code (get channels-datatype->opencv-type-map
+                              {:n-channels chans
+                               :datatype datatype})]
+         (boolean opencv-code))))
+
+
 (defmacro thrownil
   [x message map]
   `(if-let [x# ~x]
@@ -139,11 +151,10 @@
                         :datatype))
   dtype-base/PPrototype
   (from-prototype [item datatype shape]
-    (when-not (= 3 (count shape))
-      (throw (ex-info "Opencv Mat must have height, width channels"
-                      {:shape shape})))
-    (let [[height width channels] shape]
-      (new-mat height width channels :dtype datatype)))
+    (if (acceptable-image-params? datatype shape)
+      (let [[height width channels] shape]
+        (new-mat height width channels :dtype datatype))
+      (dtype-base/from-prototype (dtype-jna/->typed-pointer item) datatype shape)))
 
   jcpp-dtype/PToPtr
   (->ptr-backing-store [item] (jcpp-dtype/set-pointer-limit-and-capacity

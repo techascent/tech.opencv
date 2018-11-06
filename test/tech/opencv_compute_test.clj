@@ -41,7 +41,5 @@
 
 (deftest smooth-image-flow
   (-> (opencv/load "test/data/test.jpg")
-      cpu-tm/buffer->tensor
       (op// 2)
-      ct/tensor->buffer
       (opencv/save "tensor_darken.jpg")))
