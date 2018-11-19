@@ -13,23 +13,21 @@
   []
   (resource/with-resource-context
     (let [test-image (opencv/load "test/data/test.jpg")
-          image-tens (cpu-tm/buffer->tensor test-image)
           ;;Select is in-place so this did not change the image at all.
-          bgr-image (ct/select image-tens :all :all [2 1 0])
+          bgr-image (ct/select test-image :all :all [2 1 0])
           dest-tens (ct/clone bgr-image)]
       ;;The tensor library has the convention that the thing that is mutated
       ;;is the first thing.  Also the thing that is mutated is returned from
       ;;the function.
-      (ct/assign! image-tens dest-tens)
+      (ct/assign! test-image dest-tens)
       (opencv/save test-image "bgr.jpg"))))
 
 
 (deftest lighten-bgr-test
   []
   (resource/with-resource-context
-    (let [test-image (opencv/load "test/data/test.jpg")
-          image-tens (cpu-tm/buffer->tensor test-image)]
-      (ct/assign! image-tens (-> image-tens
+    (let [test-image (opencv/load "test/data/test.jpg")]
+      (ct/assign! test-image (-> test-image
                                  (ct/select :all :all [2 1 0])
                                  (ct/clone :datatype :uint16)
                                  (op/+ 50)
@@ -40,6 +38,7 @@
 
 
 (deftest smooth-image-flow
-  (-> (opencv/load "test/data/test.jpg")
-      (op// 2)
-      (opencv/save "tensor_darken.jpg")))
+  (resource/with-resource-context
+    (-> (opencv/load "test/data/test.jpg")
+        (op// 2)
+        (opencv/save "tensor_darken.jpg"))))

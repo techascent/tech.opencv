@@ -6,7 +6,9 @@
             [clojure.core.matrix :as m]
             [clojure.core.matrix.macros :refer [c-for]]
             [tech.datatype :as dtype]
-            [tech.datatype.base :as dtype-base]))
+            [tech.datatype.base :as dtype-base]
+            [tech.datatype.java-unsigned :as unsigned]
+            [tech.datatype.jna :as dtype-jna]))
 
 (defn delete-test-file!
   [test-fname]
@@ -66,3 +68,10 @@
       (dtype/copy-raw->item! (repeat 3 src-image) test-buf 0)
       (is (= [172 170 170 172 170 170 171 169 169 171]
              (vec (take 10 test-buf)))))))
+
+
+(deftest correct-interfaces
+  (resource/with-resource-context
+    (let [src-image (opencv/load "test/data/test.jpg")]
+      (is (dtype-jna/typed-pointer? src-image)
+          (unsigned/typed-buffer? src-image)))))
