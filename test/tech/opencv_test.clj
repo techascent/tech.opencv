@@ -8,7 +8,8 @@
             [tech.datatype :as dtype]
             [tech.datatype.base :as dtype-base]
             [tech.datatype.java-unsigned :as unsigned]
-            [tech.datatype.jna :as dtype-jna]))
+            [tech.datatype.jna :as dtype-jna]
+            [tech.jna :as jna]))
 
 (defn delete-test-file!
   [test-fname]
@@ -74,4 +75,6 @@
   (resource/with-resource-context
     (let [src-image (opencv/load "test/data/test.jpg")]
       (is (dtype-jna/typed-pointer? src-image)
-          (unsigned/typed-buffer? src-image)))))
+          (unsigned/typed-buffer? src-image))
+      (is (jna/checknil src-image))
+      (is (jna/ensure-ptr src-image)))))
