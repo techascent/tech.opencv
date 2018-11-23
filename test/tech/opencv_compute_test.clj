@@ -11,7 +11,7 @@
 
 (deftest bgr-test
   []
-  (resource/with-resource-context
+  (resource/stack-resource-context
     (let [test-image (opencv/load "test/data/test.jpg")
           ;;Select is in-place so this did not change the image at all.
           bgr-image (ct/select test-image :all :all [2 1 0])
@@ -25,7 +25,7 @@
 
 (deftest lighten-bgr-test
   []
-  (resource/with-resource-context
+  (resource/stack-resource-context
     (let [test-image (opencv/load "test/data/test.jpg")]
       (ct/assign! test-image (-> test-image
                                  (ct/select :all :all [2 1 0])
@@ -38,7 +38,7 @@
 
 
 (deftest smooth-image-flow
-  (resource/with-resource-context
+  (resource/stack-resource-context
     (-> (opencv/load "test/data/test.jpg")
         (op// 2)
         (opencv/save "tensor_darken.jpg"))))

@@ -17,7 +17,7 @@
     (io/delete-file test-fname)))
 
 (deftest base-test
-  (resource/with-resource-context
+  (resource/stack-resource-context
     (let [src-img (opencv/load "test/data/test.jpg")
           [height width n-chan] (m/shape src-img)
           test-fname "smaller.jpg"
@@ -35,7 +35,7 @@
 
 
 (deftest marshal-test
-  (resource/with-resource-context
+  (resource/stack-resource-context
     (with-bindings {#'dtype-base/*error-on-slow-path* true}
       (let [src-img (opencv/load "test/data/test.jpg")
             dest-img (opencv/clone src-img)
@@ -62,7 +62,7 @@
 
 
 (deftest copy-raw
-  (resource/with-resource-context
+  (resource/stack-resource-context
     (let [src-image (opencv/load "test/data/test.jpg")
           test-buf (int-array (* 3 (m/ecount src-image)))]
       ;;Does this work or not.  Important functionality
@@ -72,7 +72,7 @@
 
 
 (deftest correct-interfaces
-  (resource/with-resource-context
+  (resource/stack-resource-context
     (let [src-image (opencv/load "test/data/test.jpg")]
       (is (dtype-jna/typed-pointer? src-image)
           (unsigned/typed-buffer? src-image))

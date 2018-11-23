@@ -1,5 +1,6 @@
 (ns tech.opencv
-  (:require [tech.resource :as resource]
+  (:require [tech.resource.stack :as stack]
+            [tech.resource :as resource]
             [clojure.core.matrix.protocols :as mp]
             [tech.datatype.base :as dtype-base]
             [tech.datatype :as dtype]
@@ -128,7 +129,7 @@
 
 
 (extend-type opencv_core$Mat
-  resource/PResource
+  stack/PResource
   (release-resource [item] (.release item) (.deallocate item))
   mp/PDimensionInfo
   (dimensionality [m] (count (mp/get-shape m)))
