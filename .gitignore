@@ -11,3 +11,4 @@ pom.xml.asc
 .hg/
 *.jpg
 *.png
+.cpcache
