@@ -2,7 +2,9 @@
 
 [![Clojars Project](https://clojars.org/techascent/tech.opencv/latest-version.svg)](https://clojars.org/techascent/tech.opencv)
 
-OpenCV bindings via javacpp.
+OpenCV bindings via javacpp.  
+
+You can read a bit more about it [here](http://techascent.com/blog/opencv-love.html).
 
 ## Usage
 
