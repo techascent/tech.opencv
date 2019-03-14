@@ -2,4 +2,4 @@
  :deps {org.clojure/clojure {:mvn/version "1.9.0"}
         techascent/tech.javacpp-datatype {:mvn/version "3.9"}
         org.bytedeco.javacpp-presets/opencv-platform {:mvn/version "4.0.1-1.4.4"}}
- :aliases {:test {:extra-deps {techascent/tech.compute {:mvn/version "3.17"}}}}}
+ :aliases {:test {:extra-deps {techascent/tech.compute {:mvn/version "3.18"}}}}}
