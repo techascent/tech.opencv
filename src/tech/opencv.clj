@@ -1,14 +1,12 @@
 (ns tech.opencv
   (:require [tech.resource.stack :as stack]
             [tech.resource :as resource]
-            [clojure.core.matrix.protocols :as mp]
-            [tech.datatype.base :as dtype-base]
-            [tech.datatype :as dtype]
-            [tech.datatype.javacpp :as jcpp-dtype]
-            [tech.datatype.java-unsigned :as unsigned]
-            [tech.datatype.jna :as dtype-jna]
-            [clojure.set :as c-set]
-            [clojure.core.matrix :as m])
+            [tech.jna :as jna]
+            [tech.v2.datatype :as dtype]
+            [tech.v2.datatype.protocols :as dtype-proto]
+            [tech.v2.datatype.javacpp :as jcpp-dtype]
+            [tech.v2.datatype.jna :as dtype-jna]
+            [clojure.set :as c-set])
   (:refer-clojure :exclude [load])
   (:import [org.bytedeco.javacpp opencv_core
             opencv_imgcodecs opencv_core$Mat
@@ -130,37 +128,39 @@
 
 (extend-type opencv_core$Mat
   stack/PResource
-  (release-resource [item] (.release item) (.deallocate item))
-  mp/PDimensionInfo
-  (dimensionality [m] (count (mp/get-shape m)))
-  (get-shape [m] [(.rows m) (.cols m) (.channels m)])
-  (is-scalar? [m] false)
-  (is-vector? [m] true)
-  (dimension-count [m dimension-number]
-    (let [shape (mp/get-shape m)]
-      (if (<= (count shape) (long dimension-number))
-        (get shape dimension-number)
-        (throw (ex-info "Array does not have specific dimension"
-                        {:dimension-number dimension-number
-                         :shape shape})))))
-  mp/PElementCount
-  (element-count [m] (apply * (mp/get-shape m)))
+  (release-resource [item]
+    (.release item)
+    (.deallocate item))
 
-  dtype-base/PDatatype
+  dtype-proto/PShape
+  (shape [m] [(.rows m) (.cols m) (.channels m)])
+
+  dtype-proto/PCountable
+  (ecount [m] (* (.rows m) (.cols m) (.channels m)))
+
+  dtype-proto/PDatatype
   (get-datatype [m] (-> (.type m)
                         opencv-type->channels-datatype
                         :datatype))
-  dtype-base/PPrototype
+
+  dtype-proto/PPrototype
   (from-prototype [item datatype shape]
     (if (acceptable-image-params? datatype shape)
       (let [[height width channels] shape]
         (new-mat height width channels :dtype datatype))
-      (dtype-base/from-prototype (dtype-jna/->typed-pointer item) datatype shape)))
+      (do
+        (dtype/make-container :native-buffer datatype (apply * 1 shape)))))
+
 
   jcpp-dtype/PToPtr
-  (->ptr-backing-store [item] (jcpp-dtype/set-pointer-limit-and-capacity
-                               (.ptr item)
-                               (mp/element-count item))))
+  (convertible-to-javacpp-ptr? [item] true)
+  (->javacpp-ptr [item] (.ptr item))
+
+
+  jna/PToPtr
+  (is-jna-ptr-convertible? [item] true)
+  (->ptr-backing-store [item] (jna/as-ptr
+                               (.ptr item))))
 
 
 (defn new-mat
@@ -174,7 +174,7 @@
 
 
 (defn load
-  "Note you can call clojure.core.matrix/shape and tech.datatype.base/get-datatype
+  "Note you can call tech.v2.datatype/shape and tech.v2.datatype/get-datatype
   to figure out what was loaded."
   ^opencv_core$Mat [^String path]
   (resource/track (opencv_imgcodecs/imread path)))
@@ -216,7 +216,7 @@
   [^opencv_core$Mat src-img
    ^opencv_core$Mat dest-img
    resize-algorithm-kwd]
-  (let [[new-height new-width n-chans] (m/shape dest-img)
+  (let [[new-height new-width n-chans] (dtype/shape dest-img)
         new-width (int new-width)
         new-height (int new-height)]
     (opencv_imgproc/resize src-img dest-img
@@ -228,7 +228,7 @@
 (defn resize
   "Resize the source image producing a new image."
   ([src-img new-width new-height {:keys [resize-algorithm] :as options}]
-   (let [[src-height src-width n-channels] (m/shape src-img)
+   (let [[src-height src-width n-channels] (dtype/shape src-img)
          retval (new-mat new-height new-width n-channels
                          :dtype (dtype/get-datatype src-img))
          resize-algorithm (or resize-algorithm
@@ -241,7 +241,7 @@
   ([src-img new-width new-height]
    (resize src-img new-width new-height {}))
   ([src-img new-width]
-   (let [[src-height src-width chans] (m/shape src-img)
+   (let [[src-height src-width chans] (dtype/shape src-img)
          ratio (/ (double new-width) (double src-width))
          new-height (-> (* (double src-height) ratio)
                         Math/round
@@ -252,3 +252,14 @@
 (defn clone
   [src-img]
   (dtype/clone src-img))
+
+
+(defmethod dtype-proto/make-container :opencv-image
+  [container-type datatype img-shape options]
+  (when-not (acceptable-image-params? datatype img-shape)
+    (throw (ex-info
+            (format "Cannot create image of datatype/shape combination: %s/%s"
+                    datatype img-shape)
+            {})))
+  (let [[height width channels] img-shape]
+    (new-mat height width channels :dtype datatype)))
