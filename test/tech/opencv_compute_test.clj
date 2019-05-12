@@ -15,9 +15,8 @@
           ;;Select is in-place so this did not change the image at all.
           bgr-image (dtt/select test-image :all :all [2 1 0])
           dest-image (dtype/copy! bgr-image (dtype/from-prototype test-image))]
-      ;;The tensor library has the convention that the thing that is mutated
-      ;;is the first thing.  Also the thing that is mutated is returned from
-      ;;the function.
+      ;;The datatype library has the convention that the thing that is mutated
+      ;;is returned from the function.
       (opencv/save dest-image "bgr.jpg"))))
 
 

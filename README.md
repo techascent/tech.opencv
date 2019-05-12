@@ -2,7 +2,7 @@
 
 [![Clojars Project](https://clojars.org/techascent/tech.opencv/latest-version.svg)](https://clojars.org/techascent/tech.opencv)
 
-OpenCV bindings via javacpp.  
+OpenCV bindings via javacpp.
 
 You can read a bit more about it [here](http://techascent.com/blog/opencv-love.html).
 
@@ -17,50 +17,46 @@ Bindings to clojure.core.matrix and tech.datatype allow you to get into the prop
 a loaded matrix.
 
 ```clojure
+(require '[tech.opencv :as opencv])
+(require '[tech.v2.datatype :as dtype])
+(require '[tech.v2.datatype.functional :as dfn])
+
       (let [src-img (opencv/load "test/data/test.jpg")
-            dest-img (opencv/clone src-img)
-            num-elems (m/ecount src-img)
-            float-data (float-array num-elems)
-            mult-data (float-array num-elems)
-            ;;Save as jpg and spend an hour scratching head...
-            test-fname "darken.png"
-            convert-fn (fn [input]
-                         (float (Math/round (* 0.5 input))))]
-        (dtype/copy! src-img float-data)
-        ;;darken img.  Float data is range 0-255
-        (c-for [idx (int 0) (< idx num-elems) (inc idx)]
-               (aset mult-data idx (float
-                                    (convert-fn (aget float-data idx)))))
-        (delete-test-file! test-fname)
-        (-> (dtype/copy! mult-data dest-img)
-            (opencv/save test-fname))
-        (let [result (opencv/load test-fname)
-              result-data (float-array num-elems)]
-          (dtype/copy! result result-data)
-          (is (m/equals (take 10 result-data)
-                        (map convert-fn (take 10 float-data))))))
+          dest-img (opencv/clone src-img)
+          num-elems (dtype/ecount src-img)
+          ;;Save as jpg and spend an hour scratching head...
+          test-fname "darken.png"
+          convert-fn (fn [input]
+                       (float (Math/floor (* 0.5 input))))]
+      ;;darken img.  Float data is range 0-255
+      (delete-test-file! test-fname)
+      (-> (unary-op/unary-reader :int16 (unchecked-short (quot x 2)) src-img)
+          (dtype/copy! dest-img)
+          (opencv/save test-fname))
+      (let [result (opencv/load test-fname)
+            result-data (float-array num-elems)]
+        (dtype/copy! result result-data)
+        (is (dfn/equals (take 10 result-data)
+                        (map convert-fn (take 10 (dtype/->reader src-img)))))))
 ```
 
 ![darker image](images/darken.png)
 
 
-### Compute Tensors
+### Datatype Tensors
 
-Integrated with the compute.tensor math library:
+Integrated with the tech.v2.tensor math system:
 
 ```clojure
+(require '[tech.v2.tensor :as dtt])
     (let [test-image (opencv/load "test/data/test.jpg")
-          image-tens (cpu-tm/typed-bufferable->tensor test-image)
           ;;Select is in-place so this did not change the image at all.
-          bgr-image (ct/select image-tens :all :all [2 1 0])
-          dest-tens (-> (ct/new-tensor (ct/shape bgr-image)
-                                       :datatype (ct/get-datatype image-tens))
-                        (ct/assign! bgr-image))]
-      ;;The tensor library has the convention that the thing that is mutated
-      ;;is the first thing.  Also the thing that is mutated is returned from
-      ;;the function.
-      (ct/assign! image-tens dest-tens)
-      (opencv/save test-image "bgr.jpg"))
+          bgr-image (dtt/select test-image :all :all [2 1 0])
+		  ;;Copy src dest
+          dest-image (dtype/copy! bgr-image (dtype/from-prototype test-image))]
+      ;;The datatype library has the convention that the thing that is mutated
+	  ;;is returned from the function.
+      (opencv/save dest-image "bgr.jpg"))
 ```
 
 ![bgr image](images/bgr.jpg)
@@ -70,16 +66,16 @@ A bit more involved example:
 
 
 ```clojure
-  (let [test-image (opencv/load "test/data/test.jpg")
-        image-tens (cpu-tm/typed-bufferable->tensor test-image)]
-      (ct/assign! image-tens (-> image-tens
-                                 (ct/select :all :all [2 1 0])
-                                 (ct/clone :datatype :uint16)
-                                 (op/+ 50)
-                                 ;;Clamp top end to 0-255
-                                 (op/min 255)))
+   (let [test-image (opencv/load "test/data/test.jpg")
+         result
+         (-> test-image
+             (dtt/select :all :all [2 1 0])
+             (dfn/+ 50)
+             ;;Clamp top end to 0-255
+             (dfn/min 255)
+             (dtype/copy! (dtype/from-prototype test-image)))]
 
-      (opencv/save test-image "bgr-lighten.jpg"))
+      (opencv/save result "bgr-lighten.jpg"))
 ```
 
 ![lightened bgr](images/bgr-lighten.jpg)
@@ -90,13 +86,13 @@ A bit more involved example:
 
 
 Please refer to the [tests](test/tech/opencv_test.clj),
-[compute tests](test/tech/opencv_compute_test.clj),
+[tensor tests](test/tech/opencv_compute_test.clj),
 and [opencv.clj](src/tech/opencv.clj).
 
 
 ## License
 
-Copyright © 2018 [Tech Ascent, LLC](https://github.com/tech-ascent).
+Copyright © 2019 [Tech Ascent, LLC](https://github.com/tech-ascent).
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
