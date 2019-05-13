@@ -6,7 +6,8 @@
             [tech.v2.datatype :as dtype]
             [tech.v2.datatype.functional :as dfn]
             [tech.v2.datatype.unary-op :as unary-op]
-            [tech.v2.tensor :as dtt]))
+            [tech.v2.tensor :as dtt]
+            [clojure.pprint]))
 
 
 (deftest bgr-test
