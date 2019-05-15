@@ -51,7 +51,7 @@
          ;; times per byte value.  ;; It is important to realize that under the
          ;; covers the image is stored as bytes.  These are read in a datatype-aware
          ;; way and converted to their appropriate unsigned values automatically
-         ;; and when writter they are checked to ensure they are within range.
+         ;; and when written they are checked to ensure they are within range.
          ;; There are 2N checks for correct datatype in this pathway; everything else
          ;; is read/operated on as a short integer.
          reader-composition  #(-> source-image
