@@ -44,16 +44,15 @@
    (let [source-image (-> (dtt/clone (opencv/load "test/data/test.jpg")
                                    :container-type :typed-buffer))
 
-         ;; Reader composition is lazy so the expression below reads from
-         ;; the test image (ecount image) times.  It writes to the destination
-         ;; once and the byte value is completely transformed from the src image
-         ;; to the dest while in cache.  Virtual table lookups happen multiple
-         ;; times per byte value.  ;; It is important to realize that under the
-         ;; covers the image is stored as bytes.  These are read in a datatype-aware
-         ;; way and converted to their appropriate unsigned values automatically
-         ;; and when writter they are checked to ensure they are within range.
-         ;; There are 2N checks for correct datatype in this pathway; everything else
-         ;; is read/operated on as a short integer.
+         ;; Reader composition is lazy so the expression below reads from the test image
+         ;; (ecount image) times.  It writes to the destination once and the byte value
+         ;; is completely transformed from the src image to the dest while in cache.
+         ;; Virtual table lookups happen multiple times per byte value.  It is important
+         ;; to realize that under the covers the image is stored as bytes.  These are
+         ;; read in a datatype-aware way and converted to their appropriate unsigned
+         ;; values automatically and when written they are checked to ensure they are
+         ;; within range.  There are 2N checks for correct datatype in this pathway;
+         ;; everything else is read/operated on as a short integer.
          reader-composition  #(-> source-image
                                   (dtt/select :all :all [2 1 0])
                                   (dfn/+ 50)
@@ -61,6 +60,10 @@
                                   (dfn/min 255)
                                   (dtype/copy! (dtype/from-prototype source-image)))
 
+         ;; In this case, we use a macro to do the entire computation inline in one reader.
+         ;; This saves the cost of a vtable lookup and some indirection at the cost of
+         ;; creating a specific function for just this purpose.  As above, the data
+         ;; is read correctly from the source and then checked on write.
          inline-fn #(as-> source-image dest-image
                       (dtt/select dest-image :all :all [2 1 0])
                       (unary-op/unary-reader
