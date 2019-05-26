@@ -159,8 +159,11 @@
 
   jna/PToPtr
   (is-jna-ptr-convertible? [item] true)
-  (->ptr-backing-store [item] (jna/as-ptr
-                               (.ptr item))))
+  (->ptr-backing-store [item]
+    (let [retval (jna/as-ptr
+                  (.ptr item))
+          src-map {:item-ptr item}]
+      (resource/track retval #(get src-map :item-ptr) [:gc]))))
 
 
 (defn new-mat
