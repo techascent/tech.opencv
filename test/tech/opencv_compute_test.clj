@@ -41,9 +41,7 @@
    ;;collects the garbage from the time tests below and we aren't sitting
    ;;with image allocation/deallocation times in our performance tests.
    ;;The gc will be a lot faster.
-   (let [source-image (-> (dtt/clone (opencv/load "test/data/test.jpg")
-                                   :container-type :typed-buffer))
-
+   (let [source-image (opencv/load "test/data/test.jpg")
          ;; Reader composition is lazy so the expression below reads from the test image
          ;; (ecount image) times.  It writes to the destination once and the byte value
          ;; is completely transformed from the src image to the dest while in cache.
@@ -60,10 +58,10 @@
                                   (dfn/min 255)
                                   (dtype/copy! (dtype/from-prototype source-image)))
 
-         ;; In this case, we use a macro to do the entire computation inline in one reader.
-         ;; This saves the cost of a vtable lookup and some indirection at the cost of
-         ;; creating a specific function for just this purpose.  As above, the data
-         ;; is read correctly from the source and then checked on write.
+         ;; In this case, we use a macro to do the entire computation inline in one
+         ;; reader.  This saves the cost of a vtable lookup and some indirection at the
+         ;; cost of creating a specific function for just this purpose.  As above, the
+         ;; data is read correctly from the source and then checked on write.
          inline-fn #(as-> source-image dest-image
                       (dtt/select dest-image :all :all [2 1 0])
                       (unary-op/unary-reader
