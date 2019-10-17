@@ -1,4 +1,4 @@
 {:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
-        techascent/tech.javacpp-datatype {:mvn/version "4.23"}
+        techascent/tech.javacpp-datatype {:mvn/version "4.24"}
         org.bytedeco.javacpp-presets/opencv-platform {:mvn/version "4.0.1-1.4.4"}}}
