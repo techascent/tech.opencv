@@ -192,6 +192,7 @@
 (def resize-algo-kwd->opencv-map
   {;;Bilinear
    :linear opencv_imgproc/CV_INTER_LINEAR
+   :bilinear opencv_imgproc/CV_INTER_LINEAR
    ;;Cubic
    :cubic opencv_imgproc/CV_INTER_CUBIC
    ;;Pixel area averaging
@@ -199,7 +200,8 @@
    ;;Lanczos with a 4x4 filter
    :lanczos opencv_imgproc/CV_INTER_LANCZOS4
    ;;Nearest Neighbor
-   :nn opencv_imgproc/CV_INTER_NN})
+   :nn opencv_imgproc/CV_INTER_NN
+   :nearest opencv_imgproc/CV_INTER_NN})
 
 
 (defn resize-algo-kwd->opencv
