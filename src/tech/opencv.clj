@@ -3,9 +3,12 @@
             [tech.resource :as resource]
             [tech.jna :as jna]
             [tech.v2.datatype :as dtype]
+            [tech.v2.datatype.casting :as casting]
             [tech.v2.datatype.protocols :as dtype-proto]
             [tech.v2.datatype.javacpp :as jcpp-dtype]
             [tech.v2.datatype.jna :as dtype-jna]
+            [tech.v2.tensor :as dtt]
+            [tech.v2.tensor.dimensions :as dtt-dims]
             [clojure.set :as c-set])
   (:refer-clojure :exclude [load])
   (:import [org.bytedeco.javacpp opencv_core
@@ -150,6 +153,17 @@
         (new-mat height width channels :dtype datatype))
       (do
         (dtype/make-container :native-buffer datatype (apply * 1 shape)))))
+
+  dtype-proto/PToBufferDesc
+  (convertible-to-buffer-desc? [item] true)
+  (->buffer-descriptor [item]
+    (let [datatype (dtype/get-datatype item)
+          shape (dtype/shape item)]
+      {:datatype datatype
+       :ptr (jna/->ptr-backing-store item)
+       :shape shape
+       :strides (->> (dtt-dims/extend-strides (dtype/shape item))
+                     (mapv (partial * (casting/numeric-byte-width datatype))))}))
 
 
   jcpp-dtype/PToPtr

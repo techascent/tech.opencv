@@ -90,3 +90,19 @@
          (dfn// 2)
          (dtype/copy! (dtype/from-prototype src-img))
          (opencv/save "tensor_darken.jpg")))))
+
+
+(deftest tensor-test
+  (resource/stack-resource-context
+   (is (dfn/equals
+        (dtt/->tensor [[[172 170 170]
+                        [172 170 170]
+                        [171 169 169]]
+                       [[173 171 171]
+                        [174 172 172]
+                        [173 171 171]]
+                       [[174 172 172]
+                        [175 173 173]
+                        [174 172 172]]])
+        (dtt/select (opencv/load "test/data/test.jpg")
+                    (range 3) (range 3) :all)))))
