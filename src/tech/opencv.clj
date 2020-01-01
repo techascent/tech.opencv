@@ -171,9 +171,9 @@
   (->javacpp-ptr [item] (.ptr item))
 
 
-  jna/PToPtr
-  (is-jna-ptr-convertible? [item] true)
-  (->ptr-backing-store [item]
+  dtype-proto/PToJNAPointer
+  (convertible-to-data-ptr? [item] true)
+  (->jna-ptr [item]
     (let [retval (jna/as-ptr
                   (.ptr item))
           src-map {:item-ptr item}]
