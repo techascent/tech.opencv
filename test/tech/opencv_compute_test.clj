@@ -77,9 +77,9 @@
      (reader-composition)
      (inline-fn)
      (clojure.pprint/pprint
-      {:reader-composition (with-out-str (time (dotimes [iter 50]
+      {:reader-composition (with-out-str (time (dotimes [iter 10]
                                                  (reader-composition))))
-       :inline-fn (with-out-str (time (dotimes [iter 50]
+       :inline-fn (with-out-str (time (dotimes [iter 10]
                                         (inline-fn))))}))))
 
 

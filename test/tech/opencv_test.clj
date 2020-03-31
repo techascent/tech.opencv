@@ -4,7 +4,6 @@
             [tech.opencv :as opencv]
             [tech.resource :as resource]
             [tech.v2.datatype :as dtype]
-            [tech.v2.datatype.jna :as dtype-jna]
             [tech.v2.datatype.functional :as dfn]
             [tech.v2.datatype.unary-op :as unary-op]
             [tech.jna :as jna]))
@@ -13,6 +12,8 @@
   [test-fname]
   (when (.exists (io/file test-fname))
     (io/delete-file test-fname)))
+
+
 
 (deftest base-test
   (resource/stack-resource-context

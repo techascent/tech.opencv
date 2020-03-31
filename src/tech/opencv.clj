@@ -6,9 +6,7 @@
             [tech.v2.datatype.casting :as casting]
             [tech.v2.datatype.protocols :as dtype-proto]
             [tech.v2.datatype.javacpp :as jcpp-dtype]
-            [tech.v2.datatype.jna :as dtype-jna]
-            [tech.v2.tensor :as dtt]
-            [tech.v2.tensor.dimensions :as dtt-dims]
+            [tech.v2.tensor.dimensions.analytics :as dims-analytics]
             [clojure.set :as c-set])
   (:refer-clojure :exclude [load])
   (:import [org.bytedeco.javacpp opencv_core
@@ -146,13 +144,17 @@
                         opencv-type->channels-datatype
                         :datatype))
 
+  dtype-proto/PClone
+  (clone [m]
+    (let [[height width channels] (dtype/shape m)]
+      (new-mat height width channels :dtype (dtype/get-datatype m))))
+
   dtype-proto/PPrototype
   (from-prototype [item datatype shape]
     (if (acceptable-image-params? datatype shape)
       (let [[height width channels] shape]
         (new-mat height width channels :dtype datatype))
-      (do
-        (dtype/make-container :native-buffer datatype (apply * 1 shape)))))
+      (dtype/make-container :native-buffer datatype (apply * 1 shape))))
 
   dtype-proto/PToBufferDesc
   (convertible-to-buffer-desc? [item] true)
@@ -162,7 +164,7 @@
       {:datatype datatype
        :ptr (jna/->ptr-backing-store item)
        :shape shape
-       :strides (->> (dtt-dims/extend-strides (dtype/shape item))
+       :strides (->> (dims-analytics/shape-ary->strides (dtype/shape item))
                      (mapv (partial * (casting/numeric-byte-width datatype))))}))
 
 
